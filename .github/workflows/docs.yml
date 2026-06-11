@@ -1,0 +1,54 @@
+# Builds the DocC site on push to main and deploys to GitHub Pages.
+#
+# One-time setup (already done via `gh api -X POST repos/mnmly/MagentaRT/pages
+# -f build_type=workflow`): Settings → Pages → Source → "GitHub Actions".
+#
+# Scripts/build_docs.sh has TARGETS / HOSTING_BASE_PATH / REPO_URL baked in, so
+# this workflow just runs it. The prebuilt xcframework is a remote binaryTarget,
+# so it downloads on the runner — no local build needed.
+
+name: Build and deploy DocC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Apple Silicon runner (matches the macos-arm64 xcframework). macos-15 ships
+    # Xcode 16.x / Swift 6; the package's deployment target is macOS 14.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build docs
+        run: ./Scripts/build_docs.sh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
