@@ -20,12 +20,14 @@ since both drive the same MLX Metal kernels).
 
 ## Setup
 
-1. Build & mirror the xcframework with
-   [`magentart-xcframework-builder`](../../cpp/magentart-xcframework-builder)
-   (its `config.sh` mirrors into this package's `Frameworks/`).
-2. `swift build` to compile.
-3. Download model assets (once): `mrt models init && mrt models download`
-   → `~/Documents/Magenta/magenta-rt-v2/`.
+1. `swift build` — the prebuilt C++ stack is a **remote binaryTarget** (a GitHub
+   release asset), so it downloads automatically; no local build needed.
+   To iterate on the xcframework itself, build it with
+   [`magentart-xcframework-builder`](https://github.com/mnmly/magentart-xcframework-builder),
+   mirror it into `Frameworks/`, and set `MRT_LOCAL_XCFRAMEWORK=1`.
+2. **Model assets** (once): the app's **Download** button, or
+   `Scripts/download-models.sh` (downloads to the HuggingFace cache, which the
+   app and CLIs auto-resolve).
 
 ## ⚠️ Running needs Xcode (mlx.metallib)
 

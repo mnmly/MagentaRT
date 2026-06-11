@@ -1,5 +1,19 @@
 // swift-tools-version: 6.0
 import PackageDescription
+import Foundation
+
+// The prebuilt C++ stack is consumed as a remote binaryTarget (a GitHub release
+// asset) by default, so the package builds on a fresh checkout with no local
+// xcframework. For local iteration on the xcframework itself, build it with
+// `magentart-xcframework-builder`, mirror it into Frameworks/, and set
+// `MRT_LOCAL_XCFRAMEWORK=1` to use the local copy instead of the release.
+let magentartCore: Target = ProcessInfo.processInfo.environment["MRT_LOCAL_XCFRAMEWORK"] != nil
+    ? .binaryTarget(name: "MagentartCore", path: "Frameworks/Magentart.xcframework")
+    : .binaryTarget(
+        name: "MagentartCore",
+        url: "https://github.com/mnmly/magentart-xcframework-builder/releases/download/v0.0.1/Magentart.xcframework.zip",
+        checksum: "0c12708ed8ec8a135b0cde611ef4b1b8677eee64abf9402f7488aadd8a2297c9"
+      )
 
 // MagentaRT — Swift bridge to the magentart::core C++ inference engine (MLX on
 // Metal), packaged as a prebuilt static-library xcframework and consumed via
@@ -37,11 +51,9 @@ let package = Package(
     ],
     targets: [
         // The prebuilt C++ stack: merged static lib + Headers (incl. the
-        // magentart_swift.hpp facade) + module map. Produced by the builder.
-        .binaryTarget(
-            name: "MagentartCore",
-            path: "Frameworks/Magentart.xcframework"
-        ),
+        // magentart_swift.hpp facade) + module map. Remote release asset by
+        // default; local override via MRT_LOCAL_XCFRAMEWORK (see top of file).
+        magentartCore,
 
         // Ergonomic Swift API over the facade reference types.
         .target(
